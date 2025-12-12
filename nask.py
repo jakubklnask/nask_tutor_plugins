@@ -1,6 +1,7 @@
 from tutor import hooks
 from tutormfe.hooks import MFE_APPS
 
+
 # Add custom NASK MFE repositories
 @MFE_APPS.add()
 def _add_nask_mfes(mfes):
