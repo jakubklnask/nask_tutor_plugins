@@ -54,14 +54,14 @@ MIDDLEWARE.append('openedx.core.djangoapps.homepage_redirect.middleware.Homepage
     )
 )
 
-# Redirect PO wylogowaniu (backend setting)
-hooks.Filters.ENV_PATCHES.add_items([
-    (
-        "openedx-lms-development-settings",
-        "LOGOUT_REDIRECT_URL = 'http://apps.local.openedx.io:1999/authn/login'"
-    ),
-    (
-        "openedx-lms-production-settings",
-        "LOGOUT_REDIRECT_URL = 'https://apps.edutechnologie.sp.nask.pl/authn/login'"
-    ),
-])
+# # Redirect PO wylogowaniu (backend setting)
+# hooks.Filters.ENV_PATCHES.add_items([
+#     (
+#         "openedx-lms-development-settings",
+#         "LOGOUT_REDIRECT_URL = 'http://apps.local.openedx.io:1999/authn/login'"
+#     ),
+#     (
+#         "openedx-lms-production-settings",
+#         "LOGOUT_REDIRECT_URL = 'https://apps.edutechnologie.sp.nask.pl/authn/login'"
+#     ),
+# ])
