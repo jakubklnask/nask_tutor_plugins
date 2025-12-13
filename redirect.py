@@ -1,67 +1,112 @@
 from tutor import hooks
 
-# Patch do Dockerfile - tworzy pliki middleware podczas budowy obrazu
-hooks.Filters.ENV_PATCHES.add_item(
-    (
-        "openedx-dockerfile-post-python-requirements",
-        """
-RUN mkdir -p /openedx/edx-platform/openedx/core/djangoapps/homepage_redirect && \\
-    echo '' > /openedx/edx-platform/openedx/core/djangoapps/homepage_redirect/__init__.py && \\
-    echo 'from django.shortcuts import redirect\\n\\
-from django.conf import settings\\n\\
-\\n\\
-class HomepageRedirectMiddleware:\\n\\
-    def __init__(self, get_response):\\n\\
-        self.get_response = get_response\\n\\
-    \\n\\
-    def __call__(self, request):\\n\\
-        if request.path == "/" and request.method == "GET":\\n\\
-            is_dev = getattr(settings, "DEBUG", False)\\n\\
-            \\n\\
-            if is_dev:\\n\\
-                learner_url = "http://apps.local.openedx.io:1996/learner-dashboard/"\\n\\
-                authn_url = "http://apps.local.openedx.io:1999/authn/login?next=http%3A%2F%2Flocal.openedx.io%3A8000%2F"\\n\\
-            else:\\n\\
-                learner_url = "https://apps.edutechnologie.sp.nask.pl/learner-dashboard/"\\n\\
-                authn_url = "https://apps.edutechnologie.sp.nask.pl/authn/login?next=%2F"\\n\\
-            \\n\\
-            if request.user.is_authenticated:\\n\\
-                return redirect(learner_url)\\n\\
-            else:\\n\\
-                return redirect(authn_url)\\n\\
-        return self.get_response(request)' > /openedx/edx-platform/openedx/core/djangoapps/homepage_redirect/middleware.py
-"""
-    )
-)
-
-# Dodaje middleware do MIDDLEWARE list w production
+# For production
 hooks.Filters.ENV_PATCHES.add_item(
     (
         "openedx-lms-production-settings",
         """
-MIDDLEWARE.append('openedx.core.djangoapps.homepage_redirect.middleware.HomepageRedirectMiddleware')
-"""
+# Create homepage redirect middleware at runtime
+from pathlib import Path
+middleware_dir = Path('/openedx/edx-platform/openedx/core/djangoapps/homepage_redirect')
+middleware_dir.mkdir(parents=True, exist_ok=True)
+# Create __init__.py
+(middleware_dir / '__init__.py').write_text('')
+# Create middleware.py
+middleware_code = '''from django.shortcuts import redirect
+from django.conf import settings
+from urllib.parse import quote
+
+class HomepageRedirectMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+    
+    def __call__(self, request):
+        if request.path == "/" and request.method == "GET":
+            # Get URLs from Django settings
+            lms_base = settings.LMS_ROOT_URL
+            mfe_host = settings.MFE_CONFIG.get('BASE_URL', '')
+            protocol = 'https://' if lms_base.startswith('https') else 'http://'
+            is_dev = getattr(settings, 'DEBUG', False)
+            
+            if is_dev:
+                learner_url = f"{protocol}{mfe_host}:1996/learner-dashboard/"
+                next_url = f"{lms_base}/"
+                authn_url = f"{protocol}{mfe_host}:1999/authn/login?next={quote(next_url, safe='')}"
+            else:
+                mfe_base = f"{protocol}{mfe_host}"
+                learner_url = f"{mfe_base}/learner-dashboard/"
+                next_url = f"{lms_base}/"
+                authn_url = f"{mfe_base}/authn/login?next={quote(next_url, safe='')}"
+            
+            # Check if user is authenticated (use hasattr to be safe)
+            if hasattr(request, 'user') and request.user.is_authenticated:
+                return redirect(learner_url)
+            else:
+                return redirect(authn_url)
+        
+        return self.get_response(request)
+'''
+(middleware_dir / 'middleware.py').write_text(middleware_code)
+
+# Insert AFTER CacheBackedAuthenticationMiddleware (position 20)
+# Find the index of auth middleware
+auth_idx = next((i for i, m in enumerate(MIDDLEWARE) if 'CacheBackedAuthenticationMiddleware' in m), 19)
+MIDDLEWARE.insert(auth_idx + 1, 'openedx.core.djangoapps.homepage_redirect.middleware.HomepageRedirectMiddleware')
+        """
     )
 )
 
-# Dodaje middleware do MIDDLEWARE list w development
+# For dev - same code  
 hooks.Filters.ENV_PATCHES.add_item(
     (
         "openedx-lms-development-settings",
         """
-MIDDLEWARE.append('openedx.core.djangoapps.homepage_redirect.middleware.HomepageRedirectMiddleware')
-"""
+# Create homepage redirect middleware at runtime
+from pathlib import Path
+middleware_dir = Path('/openedx/edx-platform/openedx/core/djangoapps/homepage_redirect')
+middleware_dir.mkdir(parents=True, exist_ok=True)
+# Create __init__.py
+(middleware_dir / '__init__.py').write_text('')
+# Create middleware.py
+middleware_code = '''from django.shortcuts import redirect
+from django.conf import settings
+from urllib.parse import quote
+
+class HomepageRedirectMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+    
+    def __call__(self, request):
+        if request.path == "/" and request.method == "GET":
+            # Get URLs from Django settings
+            lms_base = settings.LMS_ROOT_URL
+            mfe_host = settings.MFE_CONFIG.get('BASE_URL', '')
+            protocol = 'https://' if lms_base.startswith('https') else 'http://'
+            is_dev = getattr(settings, 'DEBUG', False)
+            
+            if is_dev:
+                learner_url = f"{protocol}{mfe_host}:1996/learner-dashboard/"
+                next_url = f"{lms_base}/"
+                authn_url = f"{protocol}{mfe_host}:1999/authn/login?next={quote(next_url, safe='')}"
+            else:
+                mfe_base = f"{protocol}{mfe_host}"
+                learner_url = f"{mfe_base}/learner-dashboard/"
+                next_url = f"{lms_base}/"
+                authn_url = f"{mfe_base}/authn/login?next={quote(next_url, safe='')}"
+            
+            # Check if user is authenticated (use hasattr to be safe)
+            if hasattr(request, 'user') and request.user.is_authenticated:
+                return redirect(learner_url)
+            else:
+                return redirect(authn_url)
+        
+        return self.get_response(request)
+'''
+(middleware_dir / 'middleware.py').write_text(middleware_code)
+
+# Insert AFTER CacheBackedAuthenticationMiddleware (position 20)
+auth_idx = next((i for i, m in enumerate(MIDDLEWARE) if 'CacheBackedAuthenticationMiddleware' in m), 19)
+MIDDLEWARE.insert(auth_idx + 1, 'openedx.core.djangoapps.homepage_redirect.middleware.HomepageRedirectMiddleware')
+        """
     )
 )
-
-# # Redirect PO wylogowaniu (backend setting)
-# hooks.Filters.ENV_PATCHES.add_items([
-#     (
-#         "openedx-lms-development-settings",
-#         "LOGOUT_REDIRECT_URL = 'http://apps.local.openedx.io:1999/authn/login'"
-#     ),
-#     (
-#         "openedx-lms-production-settings",
-#         "LOGOUT_REDIRECT_URL = 'https://apps.edutechnologie.sp.nask.pl/authn/login'"
-#     ),
-# ])
