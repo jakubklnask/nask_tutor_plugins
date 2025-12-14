@@ -1,25 +1,12 @@
+"""
+NASK Custom Footer
+Replaces default MFE footer with custom NASK branding and links.
+"""
 from tutor import hooks
-from tutormfe.hooks import MFE_APPS, PLUGIN_SLOTS
+from tutormfe.hooks import PLUGIN_SLOTS
 
-
-# Add custom NASK MFE repositories
-@MFE_APPS.add()
-def _add_nask_mfes(mfes):
-    mfes["account"] = {"repository": "https://github.com/jakubklnask/frontend-app-account.git", "version": "nask-custom", "port": 1997}
-    mfes["authn"] = {"repository": "https://github.com/jakubklnask/frontend-app-authn.git", "version": "nask-custom", "port": 1999}
-    mfes["authoring"] = {"repository": "https://github.com/jakubklnask/frontend-app-authoring.git", "version": "nask-custom", "port": 2001}
-    mfes["learner-dashboard"] = {"repository": "https://github.com/jakubklnask/frontend-app-learner-dashboard.git", "version": "nask-custom", "port": 1996}
-    mfes["learning"] = {"repository": "https://github.com/jakubklnask/frontend-app-learning.git", "version": "nask-custom", "port": 2000}
-    mfes["profile"] = {"repository": "https://github.com/jakubklnask/frontend-app-profile.git", "version": "nask-custom", "port": 1995}
-    return mfes
-
-
-# Configure plugin slots for all MFEs
 PLUGIN_SLOTS.add_items([
-    # ==========================================
-    # CUSTOM FOOTER
-    # ==========================================
-    # Hide the default footer
+    # Hide default footer
     (
         "all",
         "org.openedx.frontend.layout.footer.v1",
@@ -101,84 +88,5 @@ PLUGIN_SLOTS.add_items([
             ),
           },
         }"""
-    ),
-    
-    # ==========================================
-    # LEARNER DASHBOARD - Hide sidebar widget
-    # ==========================================
-    (
-        "learner-dashboard",
-        "org.openedx.frontend.learner_dashboard.widget_sidebar.v1",
-        """
-        {
-          op: PLUGIN_OPERATIONS.Hide,
-          widgetId: 'default_contents',
-        }"""
-    ),
-    
-    # ==========================================
-    # HEADER - Hide default main menu (desktop)
-    # ==========================================
-    (
-        "all",
-        "org.openedx.frontend.layout.header_desktop_main_menu.v1",
-        """
-        {
-          op: PLUGIN_OPERATIONS.Hide,
-          widgetId: 'default_contents',
-        }"""
-    ),
-    
-    # ==========================================
-    # HEADER - Hide default main menu (mobile)
-    # ==========================================
-    (
-        "all",
-        "org.openedx.frontend.layout.header_mobile_main_menu.v1",
-        """
-        {
-          op: PLUGIN_OPERATIONS.Hide,
-          widgetId: 'default_contents',
-        }"""
-    ),
-])
-
-
-# Override MFE_CONFIG in LMS settings for logos and favicon
-hooks.Filters.ENV_PATCHES.add_items([
-    (
-        "openedx-lms-development-settings",
-        """
-MFE_CONFIG["LOGO_URL"] = "https://raw.githubusercontent.com/jakubklnask/openedx-nask-static-assets/refs/heads/nask-custom/cyber_logo_black.svg"
-MFE_CONFIG["LOGO_TRADEMARK_URL"] = "https://raw.githubusercontent.com/jakubklnask/openedx-nask-static-assets/refs/heads/nask-custom/cyber_logo_black.svg"
-MFE_CONFIG["LOGO_WHITE_URL"] = "https://raw.githubusercontent.com/jakubklnask/openedx-nask-static-assets/refs/heads/nask-custom/cyber_logo_white.svg"
-MFE_CONFIG["FAVICON_URL"] = "https://raw.githubusercontent.com/jakubklnask/openedx-nask-static-assets/refs/heads/nask-custom/favicon.ico"
-"""
-    ),
-    (
-        "openedx-lms-production-settings",
-        """
-MFE_CONFIG["LOGO_URL"] = "https://raw.githubusercontent.com/jakubklnask/openedx-nask-static-assets/refs/heads/nask-custom/cyber_logo_black.svg"
-MFE_CONFIG["LOGO_TRADEMARK_URL"] = "https://raw.githubusercontent.com/jakubklnask/openedx-nask-static-assets/refs/heads/nask-custom/cyber_logo_black.svg"
-MFE_CONFIG["LOGO_WHITE_URL"] = "https://raw.githubusercontent.com/jakubklnask/openedx-nask-static-assets/refs/heads/nask-custom/cyber_logo_white.svg"
-MFE_CONFIG["FAVICON_URL"] = "https://raw.githubusercontent.com/jakubklnask/openedx-nask-static-assets/refs/heads/nask-custom/favicon.ico"
-"""
-    ),
-])
-
-
-# Increase file upload limits
-hooks.Filters.ENV_PATCHES.add_items([
-    ("openedx-cms-production-settings", "MAX_ASSET_UPLOAD_FILE_SIZE_IN_MB = 1000"),
-    ("openedx-cms-development-settings", "MAX_ASSET_UPLOAD_FILE_SIZE_IN_MB = 1000"),
-    (
-        "caddyfile-cms",
-        """
-        handle_path /import/* {
-            request_body {
-                max_size 1000MB
-            }
-        }
-        """
     ),
 ])

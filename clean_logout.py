@@ -1,6 +1,9 @@
+"""
+Clean Logout Plugin
+Skips the legacy logout confirmation page and redirects directly.
+"""
 from tutor import hooks
 
-# Dla production/local - monkey patch w settings
 hooks.Filters.ENV_PATCHES.add_item(
     (
         "openedx-lms-production-settings",
@@ -20,7 +23,6 @@ if logout_file.exists():
     )
 )
 
-# Dla dev - monkey patch w settings
 hooks.Filters.ENV_PATCHES.add_item(
     (
         "openedx-lms-development-settings",

@@ -1,3 +1,8 @@
+"""
+Homepage Redirect Plugin
+Redirects unauthenticated users to login and authenticated users to learner dashboard.
+Works dynamically with any LMS_HOST/MFE_HOST configuration.
+"""
 from tutor import hooks
 
 # For production
@@ -9,9 +14,8 @@ hooks.Filters.ENV_PATCHES.add_item(
 from pathlib import Path
 middleware_dir = Path('/openedx/edx-platform/openedx/core/djangoapps/homepage_redirect')
 middleware_dir.mkdir(parents=True, exist_ok=True)
-# Create __init__.py
 (middleware_dir / '__init__.py').write_text('')
-# Create middleware.py
+
 middleware_code = '''from django.shortcuts import redirect
 from django.conf import settings
 from urllib.parse import quote
@@ -22,7 +26,6 @@ class HomepageRedirectMiddleware:
     
     def __call__(self, request):
         if request.path == "/" and request.method == "GET":
-            # Get URLs from Django settings
             lms_base = settings.LMS_ROOT_URL
             mfe_host = settings.MFE_CONFIG.get('BASE_URL', '')
             protocol = 'https://' if lms_base.startswith('https') else 'http://'
@@ -38,7 +41,6 @@ class HomepageRedirectMiddleware:
                 next_url = f"{lms_base}/"
                 authn_url = f"{mfe_base}/authn/login?next={quote(next_url, safe='')}"
             
-            # Check if user is authenticated (use hasattr to be safe)
             if hasattr(request, 'user') and request.user.is_authenticated:
                 return redirect(learner_url)
             else:
@@ -48,15 +50,13 @@ class HomepageRedirectMiddleware:
 '''
 (middleware_dir / 'middleware.py').write_text(middleware_code)
 
-# Insert AFTER CacheBackedAuthenticationMiddleware (position 20)
-# Find the index of auth middleware
 auth_idx = next((i for i, m in enumerate(MIDDLEWARE) if 'CacheBackedAuthenticationMiddleware' in m), 19)
 MIDDLEWARE.insert(auth_idx + 1, 'openedx.core.djangoapps.homepage_redirect.middleware.HomepageRedirectMiddleware')
         """
     )
 )
 
-# For dev - same code  
+# For development
 hooks.Filters.ENV_PATCHES.add_item(
     (
         "openedx-lms-development-settings",
@@ -65,9 +65,8 @@ hooks.Filters.ENV_PATCHES.add_item(
 from pathlib import Path
 middleware_dir = Path('/openedx/edx-platform/openedx/core/djangoapps/homepage_redirect')
 middleware_dir.mkdir(parents=True, exist_ok=True)
-# Create __init__.py
 (middleware_dir / '__init__.py').write_text('')
-# Create middleware.py
+
 middleware_code = '''from django.shortcuts import redirect
 from django.conf import settings
 from urllib.parse import quote
@@ -78,7 +77,6 @@ class HomepageRedirectMiddleware:
     
     def __call__(self, request):
         if request.path == "/" and request.method == "GET":
-            # Get URLs from Django settings
             lms_base = settings.LMS_ROOT_URL
             mfe_host = settings.MFE_CONFIG.get('BASE_URL', '')
             protocol = 'https://' if lms_base.startswith('https') else 'http://'
@@ -94,7 +92,6 @@ class HomepageRedirectMiddleware:
                 next_url = f"{lms_base}/"
                 authn_url = f"{mfe_base}/authn/login?next={quote(next_url, safe='')}"
             
-            # Check if user is authenticated (use hasattr to be safe)
             if hasattr(request, 'user') and request.user.is_authenticated:
                 return redirect(learner_url)
             else:
@@ -104,7 +101,6 @@ class HomepageRedirectMiddleware:
 '''
 (middleware_dir / 'middleware.py').write_text(middleware_code)
 
-# Insert AFTER CacheBackedAuthenticationMiddleware (position 20)
 auth_idx = next((i for i, m in enumerate(MIDDLEWARE) if 'CacheBackedAuthenticationMiddleware' in m), 19)
 MIDDLEWARE.insert(auth_idx + 1, 'openedx.core.djangoapps.homepage_redirect.middleware.HomepageRedirectMiddleware')
         """
