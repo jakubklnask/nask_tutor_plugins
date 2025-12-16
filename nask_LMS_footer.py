@@ -1,24 +1,32 @@
 """
 NASK Custom Footer
 Replaces default MFE footer with custom NASK branding and links.
+Applies to: account, learner-dashboard, learning, profile
 """
 from tutor import hooks
 from tutormfe.hooks import PLUGIN_SLOTS
 
-PLUGIN_SLOTS.add_items([
+# List of MFEs to apply this footer to
+MFES_WITH_FOOTER = ["account", "learner-dashboard", "learning", "profile"]
+
+# Create plugin slot items for each MFE
+footer_items = []
+
+for mfe_name in MFES_WITH_FOOTER:
     # Hide default footer
-    (
-        "all",
+    footer_items.append((
+        mfe_name,
         "org.openedx.frontend.layout.footer.v1",
         """
         {
           op: PLUGIN_OPERATIONS.Hide,
           widgetId: 'default_contents',
         }"""
-    ),
+    ))
+    
     # Insert custom NASK footer
-    (
-        "all",
+    footer_items.append((
+        mfe_name,
         "org.openedx.frontend.layout.footer.v1",
         """
         {
@@ -88,5 +96,6 @@ PLUGIN_SLOTS.add_items([
             ),
           },
         }"""
-    ),
-])
+    ))
+
+PLUGIN_SLOTS.add_items(footer_items)
