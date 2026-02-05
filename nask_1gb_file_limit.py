@@ -40,7 +40,7 @@ def fix_caddyfile_atexit():
             if content != original:
                 with open(caddy_file, 'w') as f:
                     f.write(content)
-                print("\n[NASK Plugin] ✓ Removed 250MB limit from Caddyfile")
+                #print("\n[NASK Plugin] ✓ Removed 250MB limit from Caddyfile")
         except Exception:
             pass
 

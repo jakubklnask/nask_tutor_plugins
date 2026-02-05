@@ -1,11 +1,8 @@
-"""
-NASK Custom Footer - Universal
-Single plugin that works for ALL MFEs with conditional rendering based on path.
-"""
 from tutor import hooks
 from tutormfe.hooks import PLUGIN_SLOTS
 
-
+# 1. Define the footer content as a raw string (NO 'f' prefix)
+# This preserves all your SVGs and React {{ styles }} exactly as they are.
 FOOTER_JSX = """
 <footer className="py-3" style={{backgroundColor: '#1B3961'}}>
   <div className="container">
@@ -67,7 +64,25 @@ FOOTER_JSX = """
 </footer>
 """
 
-# The universal footer plugin with conditional rendering
+# 2. Inject using .replace() (Safe Method)
+# This prevents Python from getting confused by the brackets
+plugin_config = """
+        {
+          op: PLUGIN_OPERATIONS.Insert,
+          widget: {
+            id: 'nask_universal_footer',
+            type: DIRECT_PLUGIN,
+            RenderWidget: () => {
+              const path = window.location.pathname;
+              return (
+                __FOOTER_CONTENT__
+              );
+            },
+          },
+        }
+""".replace("__FOOTER_CONTENT__", FOOTER_JSX)
+
+# 3. Add to hooks
 PLUGIN_SLOTS.add_items([
     # Hide default footer
     (
@@ -79,23 +94,10 @@ PLUGIN_SLOTS.add_items([
           widgetId: 'default_contents',
         }"""
     ),
-    # Insert conditional footer based on path
+    # Insert custom footer
     (
         "all",
         "footer_slot",
-        f"""
-        {{
-          op: PLUGIN_OPERATIONS.Insert,
-          widget: {{
-            id: 'nask_universal_footer',
-            type: DIRECT_PLUGIN,
-            RenderWidget: () => {{
-              // Show student footer on all other pages
-              return (
-                {FOOTER_JSX}
-              );
-            }},
-          }},
-        }}"""
+        plugin_config
     ),
 ])
