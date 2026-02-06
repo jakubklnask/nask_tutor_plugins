@@ -30,7 +30,7 @@ FOOTER_JSX = """
 
     <div className="row align-items-center">
       <div className="col-md-3">
-        <small className="text-white" style={{fontSize: '0.75rem'}}>© 2025 NASK. Wszelkie prawa zastrzeżone.</small>
+        <small className="text-white" style={{fontSize: '0.75rem'}}>© 2026 NASK. Wszelkie prawa zastrzeżone.</small>
       </div>
       <div className="col-md-3">
         <a href="https://nask.pl" className="text-white text-decoration-none" style={{fontSize: '0.75rem'}}>
