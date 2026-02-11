@@ -1,7 +1,8 @@
 """
-NASK 1GB File Upload Limit  
-Increases CMS file upload limit to 1000MB for course imports.
-Automatically removes the default 250MB limit from Caddyfile.
+Increases CMS file upload limit to 1000MB for course imports. Removes 250 MB Caddy limit
+THIS PLUGIN IS ONLY PART OF THE SOLUTION - CHANGES REQUIRED IN THE AUTHORING MFE! HARDCODED VALUES TEHRE
+MARKED WITH //HARD_CODED_MAX_FILE_SIZE_HERE
+
 """
 from tutor import hooks
 import os
@@ -40,7 +41,7 @@ def fix_caddyfile_atexit():
             if content != original:
                 with open(caddy_file, 'w') as f:
                     f.write(content)
-                #print("\n[NASK Plugin] ✓ Removed 250MB limit from Caddyfile")
+                #print("\n[NASK PLUGIN] Sukces")
         except Exception:
             pass
 
