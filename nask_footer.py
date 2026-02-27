@@ -4,7 +4,7 @@ from tutormfe.hooks import PLUGIN_SLOTS
 # 1. Define the footer content as a raw string (NO 'f' prefix)
 # This preserves all your SVGs and React {{ styles }} exactly as they are.
 FOOTER_JSX = """
-<footer className="py-3" style={{backgroundColor: '#1B3961'}}>
+<footer className="py-3" style={{backgroundColor: '#003475'}}>
   <div className="container">
     <div className="row align-items-center mb-2">
       <div className="col-md-3">
