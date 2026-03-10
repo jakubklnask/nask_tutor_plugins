@@ -2,12 +2,14 @@
 
 install-plugins:
 	tutor plugins install mfe
+	tutor plugins install aspects
 	@for plugin in *.py; do \
 		tutor plugins install $$plugin; \
 	done
 
 enable-plugins:
 	tutor plugins enable mfe
+	tutor plugins enable aspects
 	@for plugin in *.py; do \
 		name=$$(basename $$plugin .py); \
 		tutor plugins enable $$name; \
