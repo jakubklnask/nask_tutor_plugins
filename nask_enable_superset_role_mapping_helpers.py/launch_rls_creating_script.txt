@@ -1,0 +1,35 @@
+#1 wejscie do shella
+superset shell
+#2 zaladowanie do pamieci podajac pelna sciezke
+with open('/app/pythonpath/openedx/create_row_level_security.py') as plik:
+    exec(plik.read())
+#3 najzwyczajniej uruchomić
+create_rls_filters()
+
+#tutaj funkcja dodatkowa do czyszczenia - nie da sie stworzyc, duplikaty krzyczą
+from superset.extensions import db, security_manager
+from superset.connectors.sqla.models import RowLevelSecurityFilter
+
+session = security_manager.get_session()
+
+def clear_all_rls_filters():
+    print("Rozpoczynam usuwanie wszystkich filtrów RLS i kluczy obcych...")
+    try:
+        # Wyciągamy obiekty tabel prosto z metadanych, zero zgadywania importów
+        tabela_roles = db.metadata.tables['rls_filter_roles']
+        tabela_tables = db.metadata.tables['rls_filter_tables']
+        
+        # 1. Usuwamy powiązania z rolami i tabelami
+        session.execute(tabela_roles.delete())
+        session.execute(tabela_tables.delete())
+        
+        # 2. Usuwamy główne filtry
+        liczba_usunietych = session.query(RowLevelSecurityFilter).delete()
+        
+        session.commit()
+        print(f"Sukces: Usunięto {liczba_usunietych} filtrów RLS.")
+    except Exception as e:
+        session.rollback()
+        print(f"Błąd: {e}")
+
+clear_all_rls_filters()

@@ -1,0 +1,47 @@
+from django.contrib.auth.models import User
+from common.djangoapps.student.models import CourseAccessRole
+from common.djangoapps.student.roles import CourseStaffRole, CourseInstructorRole
+
+# 1. Pobieramy użytkownika
+USERNAME = "sagrodat333"
+try:
+    user = User.objects.get(username=USERNAME)
+    print(f"Znaleziono użytkownika: {user.username}")
+except User.DoesNotExist:
+    print(f"Błąd: Użytkownik {USERNAME} nie istnieje.")
+    exit()
+
+# 2. Usuwamy uprawnienia Global Staff (jeśli posiada)
+if user.is_staff:
+    user.is_staff = False
+    user.save()
+    print("-> Odebrano status Global Staff (is_staff=False).")
+
+# 3. Pobieramy wszystkie role przypisane do kursów
+all_roles = CourseAccessRole.objects.filter(user=user)
+count = all_roles.count()
+
+if count == 0:
+    print("-> Użytkownik nie posiada żadnych ról w kursach.")
+else:
+    print(f"-> Znaleziono {count} ról. Rozpoczynam usuwanie...")
+    for role_entry in all_roles:
+        c_id = role_entry.course_id
+        r_name = role_entry.role
+        
+        # Używamy oficjalnej klasy roli, aby wyczyścić cache uprawnień w locie
+        if r_name == 'staff':
+            CourseStaffRole(c_id).remove_users(user)
+        elif r_name == 'instructor':
+            CourseInstructorRole(c_id).remove_users(user)
+        else:
+            # Dla ról nietypowych usuwamy rekord bezpośrednio
+            role_entry.delete()
+            
+        print(f"   [OK] Usunięto rolę '{r_name}' z kursu: {c_id}")
+
+# 4. Finalne czyszczenie cache (na wszelki wypadek)
+if hasattr(user, '_roles'):
+    del user._roles
+
+print("\nSprzątanie zakończone. Użytkownik jest teraz zwykłym studentem.")

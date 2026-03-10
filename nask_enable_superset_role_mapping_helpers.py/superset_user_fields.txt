@@ -1,0 +1,1 @@
+['id', 'first_name', 'last_name', 'username', 'password', 'active', 'email', 'last_login', 'login_count', 'fail_login_count', 'created_on', 'changed_on', 'created_by_fk', 'changed_by_fk']
