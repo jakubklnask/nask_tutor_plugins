@@ -7,19 +7,22 @@ PLUGIN_NAME = "email_oauth2_proxy"
 # ==========================================
 # 0. ZMIENNE KONFIGURACJI SYSTEMU MAILOWEGO OPEN EDX
 # (USTAWIAMY TAK ŻEBY GADAŁ Z NASZYM TŁUMACZEM NA OAUTH2)
-# ==========================================
-
-SMTP_HOST = 'email-oauth2-proxy'
-SMTP_PORT = 1587
-SMTP_USE_SSL = 'false'  # mala litera bo to idzie do pliku .yml
-SMTP_USE_TLS = 'false'  
-SMTP_USERNAME = 'edu.technologie@nask.pl'
-SMTP_PASSWORD = 'ProxyPassword123'  # Hasło wymagane przez Django, proxy go nie sprawdza
+# ==========================================    
 
 hooks.Filters.CONFIG_UNIQUE.add_items([
     ("SMTP_HOST", 'email-oauth2-proxy'),
     ("SMTP_PORT",1587),
-    ("SMTP_USE_SSL",'false'),
+    ("SMTP_USE_SSL",'False'),
+    ("SMTP_USE_TLS",'false'),
+    ("SMTP_USERNAME",'edu.technologie@nask.pl'),
+    ("SMTP_PASSWORD",'ProxyPassword123')
+])
+
+# na wypadek gdyby zmienne juz byly zadeklarowane 
+hooks.Filters.CONFIG_OVERRIDES.add_items([
+    ("SMTP_HOST", 'email-oauth2-proxy'),
+    ("SMTP_PORT",1587),
+    ("SMTP_USE_SSL",'False'),
     ("SMTP_USE_TLS",'false'),
     ("SMTP_USERNAME",'edu.technologie@nask.pl'),
     ("SMTP_PASSWORD",'ProxyPassword123')
