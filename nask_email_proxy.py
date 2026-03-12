@@ -35,7 +35,7 @@ hooks.Filters.CONFIG_OVERRIDES.add_items([
 # ==========================================
 hooks.Filters.CONFIG_UNIQUE.add_items([
     ("EMAIL_PROXY_IMAGE", "email-oauth2-proxy:latest"),
-    ("EMAIL_PROXY_AZURE_APP_EMAIL", "twoj.email@domena.pl"),
+    ("EMAIL_PROXY_AZURE_APP_EMAIL", "edu.technologie@nask.pl"),
     ("EMAIL_PROXY_AZURE_APP_TENANT_ID", "common"),
     ("EMAIL_PROXY_AZURE_APP_CLIENT_ID", ""),
     ("EMAIL_PROXY_AZURE_APP_CLIENT_SECRET", ""),
