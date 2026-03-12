@@ -13,7 +13,7 @@ enable-plugins:
 		tutor plugins enable $$name; \
 	done
 
-setup-plugins: 
-	install-plugins enable-plugins
+setup-plugins: install-plugins enable-plugins
+	tutor plugins install aspects
 	tutor plugins disable indigo
 	@echo "All plugins installed and enabled"

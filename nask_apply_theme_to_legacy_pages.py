@@ -1,48 +1,57 @@
-# Nadawanie szablonu stronom legacy odbywa się poprzez umieszczenie plików
-# reprezentujących repozytorium szablonu w odpowiedni miejscu środowiska tutor
-# Robimy to podpinająć się pod komendę tutor dev/local do init wykonywaną jednorazowo
-# podczas instalowania platformy
-
-# normalnie --limit jest wykorzystywany w init do hooka CLI_DO_INIT_TASKS
-# ale ten task nie jest przypisany do zadnego kontenera - sprawdzamy wiec sztucznie --limit 
-# na podstawie nazwy pliku z tym pluginem
-
 import os
 import subprocess
+import atexit
+import sys
 from tutor import hooks
 
-# 1. DYNAMICZNA NAZWA PLUGINU
-PLUGIN_NAME = os.path.splitext(os.path.basename(__file__))[0]
+#plugin poczatkowo zrobiony przy pomocy hijackowania komendy init jednak nie moze byc
+#wykonywany na poczatku poniewaz tutor do setthemes uruchamia kontener ktory 
+#rozmawia z mysql i mongodb
+#a na samym poczatku komendy init serwisy te nie sa jeszcze zainicjalizowane
+#dlatego uruchamiamy na koncy atexit.
+#niezbyt czyste rozwiazanie ale dosyc pewne 
 
-# KONFIGURACJA
-THEME_REPO_URL = "https://github.com/jakubklnask/nask_legacy_pages_branding"
-THEME_NAME = "nask"
+def nask_theme_host_atexit():
+    """
+    Funkcja odpali się przy zamykaniu procesu Tutora.
+    Sprawdzamy, czy wywołana komenda to 'init' i jeśli tak - robimy robotę na hoście.
+    """
+    # Sprawdzamy, czy w argumentach wywołania było "init"
+    # Szukamy kombinacji ['dev', 'do', 'init'] lub ['local', 'do', 'init']
+    args = " ".join(sys.argv)
+    if "do init" not in args:
+        return
 
-# ----------------------------------------------------------------------------
-# LOGIKA NA HOŚCIE (NIE W KONTENERZE!) (DO_JOB)
-# ----------------------------------------------------------------------------
-@hooks.Actions.DO_JOB.add()
-def nask_theme_host_logic(job, *args, **kwargs):
-    if job == "init":
-        # Pobieramy flagi limit (Tutor zwraca listę lub None)
-        limit_flags = kwargs.get("limit") or []
+    THEME_NAME = "nask"
+    THEME_REPO = "https://github.com/jakubklnask/nask_legacy_pages_branding"
+    
+    try:
+        root_path = os.environ.get("TUTOR_ROOT", os.path.expanduser("~/.local/share/tutor"))
+        # Ścieżka, gdzie Tutor spodziewa się motywów
+        theme_dest = os.path.join(root_path, "env", "build", "openedx", "themes", THEME_NAME)
 
-        # Sprawdzamy: czy robimy full init (brak limitów) LUB czy celujemy w ten plugin
-        if not limit_flags or PLUGIN_NAME in limit_flags:
-            # Ścieżka do Tutora
-            tutor_root = subprocess.check_output(["tutor", "config", "printroot"]).decode("utf-8").strip()
-            theme_dir = os.path.join(tutor_root, "env", "build", "openedx", "themes", THEME_NAME)
+        print(f"\n++++++ [NASK-THEME] atexit: Wykryto 'init'. Przygotowuję motyw w: {theme_dest}")
 
-            print(f"++++++ [{PLUGIN_NAME}] Przechwycono zadanie init. Host: {theme_dir}")
+        # 1. Tworzymy katalog nadrzędny, jeśli go nie ma
+        os.makedirs(os.path.dirname(theme_dest), exist_ok=True)
 
-            # Git
-            if not os.path.exists(theme_dir):
-                print(f"++++++ [{PLUGIN_NAME}] Klonowanie repozytorium...")
-                subprocess.run(["git", "clone", THEME_REPO_URL, theme_dir], check=True)
-            else:
-                print(f"++++++ [{PLUGIN_NAME}] Aktualizacja repozytorium...")
-                subprocess.run(["git", "-C", theme_dir, "pull"], check=True)
+        # 2. Jeśli folder motywu już istnieje, usuwamy go (żeby mieć świeży klon)
+        if os.path.exists(theme_dest):
+            subprocess.run(["rm", "-rf", theme_dest], check=True)
 
-            # Automatyczne zaaplikowanie motywu (wywołanie Tutora z poziomu Pythona)
-            print(f"++++++ [{PLUGIN_NAME}] Odpalam settheme...")
-            subprocess.run(["tutor", "dev", "do", "settheme", THEME_NAME], check=True)
+        # 3. Klonujemy repozytorium na hosta
+        print(f"++++++ [NASK-THEME] Klonowanie repozytorium {THEME_NAME}...")
+        subprocess.run(["git", "clone", THEME_REPO, theme_dest], check=True)
+        
+        # 4. OPCJONALNIE: Jeśli musisz odpalić 'settheme' wewnątrz kontenera, 
+        # ale bez przerywania procesu (check=False)
+        print("++++++ [NASK-THEME] Rejestrowanie motywu w bazie (opcjonalnie)...")
+        subprocess.run(["tutor", "dev", "do", "settheme", THEME_NAME], check=False)
+
+        print("++++++ [NASK-THEME] Gotowe!\n")
+
+    except Exception as e:
+        print(f"++++++ [NASK-THEME] BŁĄD w atexit: {e}")
+
+# Rejestrujemy funkcję
+atexit.register(nask_theme_host_atexit)
