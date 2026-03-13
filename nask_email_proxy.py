@@ -9,21 +9,12 @@ PLUGIN_NAME = "email_oauth2_proxy"
 # (USTAWIAMY TAK ŻEBY GADAŁ Z NASZYM TŁUMACZEM NA OAUTH2)
 # ==========================================    
 
-hooks.Filters.CONFIG_UNIQUE.add_items([
-    ("SMTP_HOST", 'email-oauth2-proxy'),
-    ("SMTP_PORT",1587),
-    ("SMTP_USE_SSL",'False'),
-    ("SMTP_USE_TLS",'false'),
-    ("SMTP_USERNAME",'edu.technologie@nask.pl'),
-    ("SMTP_PASSWORD",'ProxyPassword123')
-])
 
-# na wypadek gdyby zmienne juz byly zadeklarowane 
 hooks.Filters.CONFIG_OVERRIDES.add_items([
     ("SMTP_HOST", 'email-oauth2-proxy'),
     ("SMTP_PORT",1587),
-    ("SMTP_USE_SSL",'False'),
-    ("SMTP_USE_TLS",'false'),
+    ("SMTP_USE_SSL",False),
+    ("SMTP_USE_TLS",False),
     ("SMTP_USERNAME",'edu.technologie@nask.pl'),
     ("SMTP_PASSWORD",'ProxyPassword123')
 ])
