@@ -81,11 +81,10 @@ RUN pip install prompt-toolkit
 [Email OAuth 2.0 Proxy configuration file]
 [Server setup]
 [SMTP-1587]
-server_address = smtp.office365.com
+server_address = smtp-mail.outlook.com
 server_port = 587
-local_address = 0.0.0.0
-local_port = 1587
 server_starttls = True
+local_address = 0.0.0.0
 
 [{email}]
 permission_url = https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize
@@ -121,7 +120,7 @@ DOCKER_COMPOSE_PATCH = f"""
 email-oauth2-proxy:
     image: {{{{ EMAIL_PROXY_IMAGE }}}}
     restart: always
-    command: ["python", "emailproxy.py", "--external-auth","--no-gui", "--config-file", "/app/config/emailproxy.config", "--cache-store", "/app/cache/tokens.json"]
+    command: ["python", "emailproxy.py","--no-gui", "--config-file", "/app/config/emailproxy.config", "--cache-store", "/app/cache/tokens.json"]
     volumes:
         - ../plugins/{PLUGIN_NAME}/config/emailproxy.config:/app/config/emailproxy.config:ro
         - ../../data/email_oauth2_proxy:/app/cache:rw

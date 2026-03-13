@@ -5,8 +5,11 @@ from lms.djangoapps.bulk_email.models import BulkEmailFlag
 
 # Używamy update_or_create, co jest najbezpieczniejszą metodą w skryptach init
 # Jeśli rekord o pk=1 nie istnieje, zostanie stworzony. Jeśli istnieje - zaktualizowany.
+# Wysoki klucz, gdyby istnialy juz flagi to doda nowa na koncu nadpisujac wszytskie poprzednie
+# Inaczej tylko zaktualizowalo by ta o pk#1 a jest ryzyko ze jakas o np. pk2 by wtedy byla zczytywana
+# jako aktualna
 obj, created = BulkEmailFlag.objects.update_or_create(
-    pk=8,
+    pk=100, 
     defaults={
         'enabled': True,
         'require_course_email_auth': False

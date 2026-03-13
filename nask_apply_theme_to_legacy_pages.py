@@ -4,54 +4,56 @@ import atexit
 import sys
 from tutor import hooks
 
-#plugin poczatkowo zrobiony przy pomocy hijackowania komendy init jednak nie moze byc
-#wykonywany na poczatku poniewaz tutor do setthemes uruchamia kontener ktory 
-#rozmawia z mysql i mongodb
-#a na samym poczatku komendy init serwisy te nie sa jeszcze zainicjalizowane
-#dlatego uruchamiamy na koncy atexit.
-#niezbyt czyste rozwiazanie ale dosyc pewne 
-
 def nask_theme_host_atexit():
     """
-    Funkcja odpali się przy zamykaniu procesu Tutora.
-    Sprawdzamy, czy wywołana komenda to 'init' i jeśli tak - robimy robotę na hoście.
+    Odpala się przy zamykaniu procesu Tutora.
+    Obsługuje --limit <nazwa_pliku_bez_py>.
     """
-    # Sprawdzamy, czy w argumentach wywołania było "init"
-    # Szukamy kombinacji ['dev', 'do', 'init'] lub ['local', 'do', 'init']
-    args = " ".join(sys.argv)
-    if "do init" not in args:
+    args = sys.argv
+    # 1. Podstawowy warunek: czy to jest komenda 'do init'?
+    if not ("do" in args and "init" in args):
         return
 
+    # 2. Wyciągamy identyfikator pluginu z nazwy pliku (np. 'nask_apply_email_templates')
+    # os.path.basename(__file__) to nazwa pliku, splitext usuwa rozszerzenie .py
+    plugin_id = os.path.splitext(os.path.basename(__file__))[0]
+
+    # 3. Logika --limit
+    if "--limit" in args:
+        try:
+            limit_idx = args.index("--limit")
+            # Sprawdzamy, czy po --limit coś jest i czy to nasza nazwa
+            if len(args) <= limit_idx + 1 or args[limit_idx + 1] != plugin_id:
+                # Jeśli jest --limit, ale na kogoś innego - wychodzimy po cichu
+                return
+        except ValueError:
+            pass # Nie powinno się zdarzyć, skoro in args zwróciło True
+
+    # ==========================================
+    # TUTAJ ZACZYNA SIĘ WŁAŚCIWA ROBOTA
+    # ==========================================
     THEME_NAME = "nask"
     THEME_REPO = "https://github.com/jakubklnask/nask_legacy_pages_branding"
     
     try:
         root_path = os.environ.get("TUTOR_ROOT", os.path.expanduser("~/.local/share/tutor"))
-        # Ścieżka, gdzie Tutor spodziewa się motywów
         theme_dest = os.path.join(root_path, "env", "build", "openedx", "themes", THEME_NAME)
 
-        print(f"\n++++++ [NASK-THEME] atexit: Wykryto 'init'. Przygotowuję motyw w: {theme_dest}")
-
-        # 1. Tworzymy katalog nadrzędny, jeśli go nie ma
+        print(f"\n++++++ [NASK-THEME] Wykonuję zadanie dla pluginu: {plugin_id}")
+        
+        # Tworzenie katalogu i klonowanie
         os.makedirs(os.path.dirname(theme_dest), exist_ok=True)
-
-        # 2. Jeśli folder motywu już istnieje, usuwamy go (żeby mieć świeży klon)
         if os.path.exists(theme_dest):
             subprocess.run(["rm", "-rf", theme_dest], check=True)
 
-        # 3. Klonujemy repozytorium na hosta
-        print(f"++++++ [NASK-THEME] Klonowanie repozytorium {THEME_NAME}...")
-        subprocess.run(["git", "clone", THEME_REPO, theme_dest], check=True)
+        print(f"++++++ [NASK-THEME] Klonowanie repozytorium do: {theme_dest}")
+        subprocess.run(["git", "clone", "--depth", "1", THEME_REPO, theme_dest], check=True)
         
-        # 4. OPCJONALNIE: Jeśli musisz odpalić 'settheme' wewnątrz kontenera, 
-        # ale bez przerywania procesu (check=False)
-        print("++++++ [NASK-THEME] Rejestrowanie motywu w bazie (opcjonalnie)...")
+        print(f"++++++ [NASK-THEME] Rejestrowanie motywu...")
         subprocess.run(["tutor", "dev", "do", "settheme", THEME_NAME], check=False)
 
-        print("++++++ [NASK-THEME] Gotowe!\n")
-
     except Exception as e:
-        print(f"++++++ [NASK-THEME] BŁĄD w atexit: {e}")
+        print(f"++++++ [NASK-THEME] BŁĄD: {e}")
 
-# Rejestrujemy funkcję
+# Rejestracja
 atexit.register(nask_theme_host_atexit)
